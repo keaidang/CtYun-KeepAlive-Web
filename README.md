@@ -125,5 +125,6 @@ PORT=9000 nohup ./CtYun > ctyun.log 2>&1 &
 ---
 
 ## 🤝 鸣谢
+- 本项目源于 [flyfishes/ctyun_keepalive](https://github.com/leleji/CtYun) 进行了二次开发增加了云手机识别和支持并添加了网页控制台，提供了linux端的二进制文件，如有侵权请联系删除项目，感谢。
 
 - 登录图形验证码识别方案灵感及接口来自 [sml2h3/ddddocr](https://github.com/sml2h3/ddddocr)。
