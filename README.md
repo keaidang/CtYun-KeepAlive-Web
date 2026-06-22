@@ -4,6 +4,10 @@
 
 本系统配备了现代化的**深色玻璃拟态（Glassmorphism）Web 控制面板**，支持实时日志滚动、动态账号管理以及设备首次绑定的网页短信交互。
 
+
+
+<img width="3792" height="1952" alt="image" src="https://github.com/user-attachments/assets/f7eb407d-da8c-43d3-b2d5-de44631fa03b" />
+
 ---
 
 ## ✨ 核心特性
