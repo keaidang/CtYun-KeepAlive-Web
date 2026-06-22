@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CtYun - 天翼云保活控制面板</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 50%, #120e2e 0%, #060412 100%);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-focus: rgba(139, 92, 246, 0.4);
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --status-green: #10b981;
+            --status-red: #ef4444;
+            --status-yellow: #f59e0b;
+            --shadow-primary: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* 玻璃拟态卡片基类 */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--shadow-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 顶部导航与状态栏 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 40px;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(6, 4, 18, 0.5);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+        }
+
+        .logo-title {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            background: linear-gradient(to right, #ffffff, #d8b4fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* 跳转按钮 */
+        .btn-jump {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.2));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.1);
+        }
+
+        .btn-jump:hover {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.4), rgba(139, 92, 246, 0.4));
+            border-color: rgba(139, 92, 246, 0.6);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* 页面主体布局 */
+        main {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 32px 40px;
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 32px;
+        }
+
+        .panel-left {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .panel-right {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* 数据统计面板 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 表单部分 */
+        .form-section {
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: var(--glass-border-focus);
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.15);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-submit:hover {
+            opacity: 0.95;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.5);
+            transform: translateY(-1px);
+        }
+
+        /* 隐藏的短信输入容器 */
+        .sms-wrapper {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        /* 账号列表 */
+        .accounts-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .account-card {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .account-name-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .account-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .account-user {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.active {
+            background-color: var(--status-green);
+            box-shadow: 0 0 8px var(--status-green);
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-dot.inactive {
+            background-color: var(--text-secondary);
+        }
+
+        .status-dot.pending {
+            background-color: var(--status-yellow);
+            box-shadow: 0 0 8px var(--status-yellow);
+            animation: pulse 1.5s infinite;
+        }
+
+        .desktop-list {
+            padding-top: 8px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .desktop-item {
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+        }
+
+        .desktop-status {
+            font-weight: 500;
+        }
+
+        .desktop-status.online {
+            color: var(--status-green);
+        }
+
+        .desktop-status.offline {
+            color: var(--status-red);
+        }
+
+        .account-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-primary);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-action.btn-delete:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #ff6b6b;
+        }
+
+        /* 日志端终端 */
+        .log-section {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            min-height: 450px;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .log-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .console-box {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-y: auto;
+            max-height: 600px;
+            color: #d1d5db;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 日志行着色 */
+        .log-line {
+            margin-bottom: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .log-info { color: #9ca3af; }
+        .log-success { color: #34d399; }
+        .log-warning { color: #fbbf24; }
+        .log-error { color: #f87171; }
+        .log-cyan { color: #22d3ee; }
+
+        /* 开关控件样式 */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .3s;
+            border-radius: 34px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-purple);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(16px);
+        }
+
+        /* 提示层 */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 24px;
+            background: rgba(139, 92, 246, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 动画 */
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.5; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 移动端响应式 */
+        @media (max-width: 1024px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+            header {
+                padding: 16px 20px;
+            }
+            main {
+                padding: 20px;
+            }
+        }
+
+        /* 登录遮罩层 */
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease;
+        }
+
+        .login-card {
+            width: 90%;
+            max-width: 400px;
+            padding: 36px;
+            text-align: center;
+        }
+
+        .login-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #ffffff, #d8b4fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        /* 通用模态弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-card {
+            width: 90%;
+            max-width: 450px;
+            padding: 28px;
+        }
+
+        /* 按钮与头部操作 */
+        .btn-header {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-header:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 登录面板 -->
+    <div id="login-overlay">
+        <div class="glass-card login-card">
+            <div class="logo-icon" style="margin: 0 auto 20px; width: 48px; height: 48px; font-size: 24px;">☁️</div>
+            <h1 class="login-title">控制面板登录</h1>
+            <p class="login-subtitle">请输入后台访问密码以继续管理保活服务。</p>
+            <div class="input-group" style="text-align: left;">
+                <label for="admin-password">访问密码</label>
+                <input type="password" id="admin-password" placeholder="请输入密码" onkeydown="if(event.key==='Enter')login()">
+            </div>
+            <button class="btn-submit" onclick="login()" style="margin-top: 10px;">进入系统</button>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo-group">
+            <div class="logo-icon">☁️</div>
+            <div class="logo-name-wrapper">
+                <h1 class="logo-title">CtYun KeepAlive</h1>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-header" onclick="showChangePasswordModal()">🔑 修改密码</button>
+            <button class="btn-header" onclick="logout()" style="color: var(--status-red);">🚪 退出</button>
+            <a href="https://pc.ctyun.cn/" target="_blank" class="btn-jump">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                一键打开天翼云电脑
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <!-- 左侧控制和配置栏 -->
+        <div class="panel-left">
+            
+            <!-- 数据统计 -->
+            <div class="stats-grid">
+                <div class="glass-card stat-card">
+                    <span class="stat-value" id="stat-total">0</span>
+                    <span class="stat-label">总账号</span>
+                </div>
+                <div class="glass-card stat-card">
+                    <span class="stat-value" style="color: var(--status-green);" id="stat-active">0</span>
+                    <span class="stat-label">运行中</span>
+                </div>
+                <div class="glass-card stat-card">
+                    <span class="stat-value" style="color: var(--status-yellow);" id="stat-pending">0</span>
+                    <span class="stat-label">待绑定</span>
+                </div>
+            </div>
+
+            <!-- 添加账号表单 -->
+            <div class="glass-card form-section" id="form-section-card">
+                <h2 class="section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                    添加保活账号
+                </h2>
+                
+                <!-- 第一步：基本信息 -->
+                <div id="login-fields">
+                    <div class="input-group">
+                        <label for="name">显示名称 (别名，选填)</label>
+                        <input type="text" id="name" placeholder="例如: 账号A">
+                    </div>
+                    <div class="input-group">
+                        <label for="user">手机号/账号</label>
+                        <input type="text" id="user" required placeholder="天翼云登录手机号">
+                    </div>
+                    <div class="input-group">
+                        <label for="password">密码</label>
+                        <input type="password" id="password" required placeholder="请输入密码">
+                    </div>
+                    <div class="input-group">
+                        <label for="deviceCode">设备码 (Device Code，选填)</label>
+                        <input type="text" id="deviceCode" placeholder="不填则自动生成并保存">
+                    </div>
+                    <button class="btn-submit" id="btn-login-submit" onclick="submitLogin()">立即登录并添加</button>
+                </div>
+
+                <!-- 第二步：短信验证码输入 (默认隐藏) -->
+                <div class="sms-wrapper" id="sms-fields">
+                    <div style="margin-bottom: 20px; font-size: 13px; color: var(--status-yellow); line-height: 1.5;">
+                        检测到该设备码未绑定账号，已向您的手机发送验证码，请输入验证码完成设备绑定。
+                    </div>
+                    <div class="input-group">
+                        <label for="sms-code">短信验证码</label>
+                        <input type="text" id="sms-code" placeholder="输入 6 位短信验证码">
+                    </div>
+                    <button class="btn-submit" onclick="submitSmsCode()" style="background: linear-gradient(135deg, var(--accent-cyan), var(--status-green)); box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);">验证并绑定设备</button>
+                    <button class="btn-action" onclick="resetForm()" style="width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px;">取消返回</button>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- 右侧状态及日志区 -->
+        <div class="panel-right">
+            
+            <!-- 运行账号列表 -->
+            <div class="accounts-section" id="accounts-container">
+                <!-- 动态渲染 -->
+            </div>
+
+            <!-- 控制台日志 -->
+            <div class="glass-card log-section">
+                <div class="log-header">
+                    <h2 class="section-title" style="margin-bottom: 0;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                        实时系统日志
+                    </h2>
+                    <div class="log-actions">
+                        <div class="switch-container">
+                            <span>自动滚动</span>
+                            <label class="switch">
+                                <input type="checkbox" id="auto-scroll-toggle" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <button class="btn-action" style="padding: 4px 12px;" onclick="clearLogs()">清除</button>
+                    </div>
+                </div>
+                <div class="console-box" id="console-logs">
+                    <div class="log-line log-info">[系统] 控制面板日志监听已启动...</div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 修改密码弹窗 -->
+    <div class="modal-overlay" id="change-password-modal">
+        <div class="glass-card modal-card">
+            <h2 class="section-title" style="margin-bottom: 20px;">
+                🔑 修改后台访问密码
+            </h2>
+            <div class="input-group">
+                <label for="old-password">原密码</label>
+                <input type="password" id="old-password" placeholder="请输入原访问密码">
+            </div>
+            <div class="input-group">
+                <label for="new-password">新密码</label>
+                <input type="password" id="new-password" placeholder="请输入新的访问密码">
+            </div>
+            <div class="input-group">
+                <label for="confirm-new-password">确认新密码</label>
+                <input type="password" id="confirm-new-password" placeholder="请再次输入新访问密码">
+            </div>
+            <button class="btn-submit" onclick="submitChangePassword()" style="margin-top: 10px;">确认修改并重新登录</button>
+            <button class="btn-action" onclick="hideChangePasswordModal()" style="width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px;">取消</button>
+        </div>
+    </div>
+
+    <!-- 吐司通知层 -->
+    <div class="toast" id="toast-notify">操作成功</div>
+
+    <script>
+        // 缓存账号的用户名，供验证短信验证码时使用
+        let pendingUser = '';
+        let accounts = [];
+        let logStream = null;
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('ctyun_token');
+            if (token) {
+                document.getElementById('login-overlay').style.display = 'none';
+                initApp();
+            } else {
+                document.getElementById('login-overlay').style.display = 'flex';
+            }
+        });
+
+        function initApp() {
+            fetchAccounts();
+            startLogStream();
+            // 每5秒更新一次状态
+            setInterval(fetchAccounts, 5000);
+        }
+
+        // 提示通知
+        function notify(message, isError = false) {
+            const toast = document.getElementById('toast-notify');
+            toast.textContent = message;
+            if (isError) {
+                toast.style.background = 'rgba(239, 68, 68, 0.9)';
+            } else {
+                toast.style.background = 'rgba(139, 92, 246, 0.9)';
+            }
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 登录系统
+        async function login() {
+            const password = document.getElementById('admin-password').value;
+            if (!password) {
+                notify('请输入密码', true);
+                return;
+            }
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const res = await response.json();
+                if (res.status === 'Success') {
+                    localStorage.setItem('ctyun_token', res.message);
+                    document.getElementById('login-overlay').style.display = 'none';
+                    initApp();
+                    notify('登录成功！');
+                } else {
+                    notify(res.message || '密码错误！', true);
+                }
+            } catch (err) {
+                notify('登录发生错误: ' + err.message, true);
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('ctyun_token');
+                window.location.reload();
+            }
+        }
+
+        // 密码修改弹窗控制
+        function showChangePasswordModal() {
+            document.getElementById('change-password-modal').style.display = 'flex';
+            document.getElementById('old-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-new-password').value = '';
+        }
+
+        function hideChangePasswordModal() {
+            document.getElementById('change-password-modal').style.display = 'none';
+        }
+
+        async function submitChangePassword() {
+            const oldPassword = document.getElementById('old-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmNew = document.getElementById('confirm-new-password').value;
+
+            if (!oldPassword || !newPassword || !confirmNew) {
+                notify('所有密码字段均不能为空', true);
+                return;
+            }
+            if (newPassword !== confirmNew) {
+                notify('两次输入的新密码不一致', true);
+                return;
+            }
+
+            try {
+                const response = await authFetch('/api/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ oldPassword, newPassword })
+                });
+                const res = await response.json();
+                if (res.success) {
+                    notify('密码修改成功，请使用新密码重新登录！');
+                    hideChangePasswordModal();
+                    setTimeout(() => {
+                        localStorage.removeItem('ctyun_token');
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    notify(res.msg || '原密码错误或修改失败', true);
+                }
+            } catch (err) {
+                notify('请求失败: ' + err.message, true);
+            }
+        }
+
+        // 带 Token 的 HTTP 请求封装
+        async function authFetch(url, options = {}) {
+            const token = localStorage.getItem('ctyun_token');
+            if (!options.headers) {
+                options.headers = {};
+            }
+            options.headers['X-Auth-Token'] = token;
+
+            try {
+                const response = await fetch(url, options);
+                if (response.status === 401) {
+                    localStorage.removeItem('ctyun_token');
+                    document.getElementById('login-overlay').style.display = 'flex';
+                    if (logStream) {
+                        logStream.close();
+                    }
+                    throw new Error('会话过期，请重新登录');
+                }
+                return response;
+            } catch (err) {
+                if (err.message !== '会话过期，请重新登录') {
+                    console.error('API Fetch 错误:', err);
+                }
+                throw err;
+            }
+        }
+
+        // 获取全部账号列表
+        async function fetchAccounts() {
+            try {
+                const response = await authFetch('/api/accounts');
+                if (!response.ok) throw new Error('网络异常');
+                accounts = await response.json();
+                renderAccounts();
+                updateStats();
+            } catch (err) {
+                console.error('获取账号失败:', err);
+            }
+        }
+
+        // 更新统计数据
+        function updateStats() {
+            document.getElementById('stat-total').textContent = accounts.length;
+            document.getElementById('stat-active').textContent = accounts.filter(a => a.isRunning || a.statusText === '保活运行中').length;
+            document.getElementById('stat-pending').textContent = accounts.filter(a => a.statusText === '等待验证码').length;
+        }
+
+        // 渲染账号
+        function renderAccounts() {
+            const container = document.getElementById('accounts-container');
+            if (accounts.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-card" style="padding: 40px; text-align: center; color: var(--text-secondary);">
+                        暂无已配置的账号，请在左侧添加账号并启动保活。
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = accounts.map(account => {
+                const isRunning = account.isRunning || account.statusText === '保活运行中';
+                const status = account.statusText;
+                let dotClass = 'inactive';
+                let statusLabel = '未运行';
+
+                if (status === '等待验证码') {
+                    dotClass = 'pending';
+                    statusLabel = '等待绑定验证码';
+                } else if (isRunning) {
+                    dotClass = 'active';
+                    statusLabel = status || '保活运行中';
+                }
+
+                const desktopsHtml = account.desktops && account.desktops.length > 0 
+                    ? `<div class="desktop-list">` + account.desktops.map(d => `
+                        <div class="desktop-item">
+                            <span>🖥️ ${d.name} (${d.code})</span>
+                            <span class="desktop-status ${d.status === '保活中' || d.status === '运行中' || d.status === '已连接并保活中' || d.status === '连接就绪' ? 'online' : 'offline'}">${d.status}</span>
+                        </div>
+                      `).join('') + `</div>`
+                    : `<div style="font-size: 12px; color: var(--text-secondary);">未获取到可用电脑设备</div>`;
+
+                return `
+                    <div class="glass-card account-card">
+                        <div class="account-header">
+                            <div class="account-name-group">
+                                <span class="account-name">${account.name || '未命名'}</span>
+                                <span class="account-user">${account.user}</span>
+                            </div>
+                            <div class="status-badge">
+                                <span class="status-dot ${dotClass}"></span>
+                                <span>${statusLabel}</span>
+                            </div>
+                        </div>
+                        ${desktopsHtml}
+                        <div class="account-actions">
+                            ${isRunning 
+                                ? `<button class="btn-action" onclick="stopAccount('${account.name}')">🔴 停止保活</button>`
+                                : `<button class="btn-action" onclick="startAccount('${account.name}')">⚡ 启动保活</button>`
+                            }
+                            <button class="btn-action btn-delete" onclick="deleteAccount('${account.name}')">🗑️ 删除账号</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 提交登录表单
+        async function submitLogin() {
+            const name = document.getElementById('name').value;
+            const user = document.getElementById('user').value;
+            const password = document.getElementById('password').value;
+            const deviceCode = document.getElementById('deviceCode').value;
+
+            if (!user || !password) {
+                notify('请输入手机号 and 密码', true);
+                return;
+            }
+
+            const btn = document.getElementById('btn-login-submit');
+            btn.disabled = true;
+            btn.textContent = '登录中...';
+
+            try {
+                const response = await authFetch('/api/accounts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, user, password, deviceCode })
+                });
+
+                const res = await response.json();
+                if (res.status === 'Success') {
+                    notify('账号登录成功并启动保活！');
+                    resetForm();
+                    fetchAccounts();
+                } else if (res.status === 'NeedSMS') {
+                    notify('设备未绑定，需要短信验证码！');
+                    pendingUser = user;
+                    // 显示验证码输入区域，隐藏基础表单
+                    document.getElementById('login-fields').style.display = 'none';
+                    document.getElementById('sms-fields').style.display = 'block';
+                } else {
+                    notify(res.message || '登录失败，请重试', true);
+                }
+            } catch (err) {
+                notify('登录发生错误: ' + err.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '立即登录并添加';
+            }
+        }
+
+        // 提交验证码
+        async function submitSmsCode() {
+            const code = document.getElementById('sms-code').value;
+            if (!code || code.length < 4) {
+                notify('请输入合法的短信验证码', true);
+                return;
+            }
+
+            try {
+                const response = await authFetch('/api/accounts/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user: pendingUser, code })
+                });
+
+                const res = await response.json();
+                if (res.status === 'Success') {
+                    notify('设备绑定成功，保活任务已启动！');
+                    resetForm();
+                    fetchAccounts();
+                } else {
+                    notify(res.message || '绑定失败，验证码可能错误或失效', true);
+                }
+            } catch (err) {
+                notify('绑定请求失败: ' + err.message, true);
+            }
+        }
+
+        // 重置表单
+        function resetForm() {
+            document.getElementById('name').value = '';
+            document.getElementById('user').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('deviceCode').value = '';
+            document.getElementById('sms-code').value = '';
+            
+            document.getElementById('login-fields').style.display = 'block';
+            document.getElementById('sms-fields').style.display = 'none';
+            pendingUser = '';
+        }
+
+        // 控制单个账号启动
+        async function startAccount(name) {
+            try {
+                const response = await authFetch('/api/accounts/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                const res = await response.json();
+                if (res.success) {
+                    notify(`账号 [${name}] 保活已启动`);
+                    fetchAccounts();
+                } else {
+                    notify(res.msg, true);
+                }
+            } catch (err) {
+                notify('请求失败: ' + err.message, true);
+            }
+        }
+
+        // 控制单个账号停止
+        async function stopAccount(name) {
+            try {
+                const response = await authFetch('/api/accounts/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                const res = await response.json();
+                if (res.success) {
+                    notify(`账号 [${name}] 保活已停止`);
+                    fetchAccounts();
+                } else {
+                    notify(res.msg, true);
+                }
+            } catch (err) {
+                notify('请求失败: ' + err.message, true);
+            }
+        }
+
+        // 删除账号
+        async function deleteAccount(name) {
+            if (!confirm(`确认要删除账号 [${name}] 吗？这会停止它的保活并清除配置文件。`)) return;
+
+            try {
+                const response = await authFetch(`/api/accounts/${encodeURIComponent(name)}`, {
+                    method: 'DELETE'
+                });
+                const res = await response.json();
+                if (res.success) {
+                    notify(`账号 [${name}] 已删除`);
+                    fetchAccounts();
+                }
+            } catch (err) {
+                notify('删除失败: ' + err.message, true);
+            }
+        }
+
+        // 清空控制台
+        function clearLogs() {
+            const consoleBox = document.getElementById('console-logs');
+            consoleBox.innerHTML = '<div class="log-line log-info">[系统] 控制台已清空.</div>';
+        }
+
+        // 启动 SSE 实时日志管道
+        function startLogStream() {
+            const consoleBox = document.getElementById('console-logs');
+            const token = localStorage.getItem('ctyun_token');
+            if (logStream) {
+                logStream.close();
+            }
+
+            logStream = new EventSource('/api/logs?token=' + encodeURIComponent(token));
+
+            logStream.onmessage = (event) => {
+                const logMessage = event.data;
+                const line = document.createElement('div');
+                line.className = 'log-line';
+
+                // 日志关键字上色
+                if (logMessage.includes('异常') || logMessage.includes('Error') || logMessage.includes('失败')) {
+                    line.classList.add('log-error');
+                } else if (logMessage.includes('收到保活') || logMessage.includes('发送保活响应成功') || logMessage.includes('登录成功')) {
+                    line.classList.add('log-success');
+                } else if (logMessage.includes('周期时间到') || logMessage.includes('重新连接') || logMessage.includes('警告') || logMessage.includes('未获取到')) {
+                    line.classList.add('log-warning');
+                } else if (logMessage.includes('=== 新周期开始') || logMessage.includes('连接已就绪')) {
+                    line.classList.add('log-cyan');
+                } else {
+                    line.classList.add('log-info');
+                }
+
+                line.textContent = logMessage;
+                consoleBox.appendChild(line);
+
+                // 限制最大日志行数，避免内存溢出
+                if (consoleBox.children.length > 500) {
+                    consoleBox.removeChild(consoleBox.firstChild);
+                }
+
+                // 自动滚动到最下方
+                if (document.getElementById('auto-scroll-toggle').checked) {
+                    consoleBox.scrollTop = consoleBox.scrollHeight;
+                }
+            };
+
+            logStream.onerror = (err) => {
+                console.error('SSE 日志连接异常，正在尝试重新连接...', err);
+                logStream.close();
+                setTimeout(startLogStream, 3000);
+            };
+        }
+    </script>
+</body>
+</html>
